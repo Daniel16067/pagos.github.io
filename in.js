@@ -1,101 +1,109 @@
-document.addEventListener("DOMContentLoaded", mostrarInventario);
+// Variables globales
+let inventario = [];
+let totalProductos = 0;
+let productosEliminados = 0;
+let totalPrecio = 0; // Nueva variable para la suma de los precios
 
-const form = document.getElementById("formProducto");
-const tabla = document.querySelector("#tablaInventario tbody");
-const totalElement = document.getElementById("totalInventario");
-const totalProductosElement = document.getElementById("totalProductos");
-const totalAccionesElement = document.getElementById("totalAcciones"); // NUEVO
+// Obtener elementos del DOM
+const formProducto = document.getElementById("formProducto");
+const tablaInventario = document.querySelector("#tablaInventario tbody");
+const totalProductosElem = document.getElementById("totalProductos");
+const productosEliminadosElem = document.getElementById("productosEliminados");
+const totalPrecioElem = document.getElementById("totalPrecio"); // Elemento para mostrar la suma total de precios
+const listaEliminados = document.getElementById("listaEliminados");
 
-let editIndex = -1; // Variable para rastrear el índice del producto a editar
-let totalAcciones = 0; // Contador de acciones (agregar, editar, eliminar)
-
-// Función para manejar el formulario
-form.addEventListener("submit", function (event) {
+// Evento para agregar un producto
+formProducto.addEventListener("submit", function (event) {
     event.preventDefault();
 
-    let nombre = document.getElementById("nombre").value.trim();
-    let cantidad = parseInt(document.getElementById("cantidad").value.trim());
-    let precio = parseFloat(document.getElementById("precio").value.trim());
+    // Obtener valores del formulario
+    const nombre = document.getElementById("nombre").value;
+    const cantidad = parseInt(document.getElementById("cantidad").value);
+    const precio = parseFloat(document.getElementById("precio").value);
 
-    if (!nombre || isNaN(cantidad) || isNaN(precio) || cantidad <= 0 || precio <= 0) {
-        alert("Por favor, complete todos los campos con valores válidos.");
+    // Validar datos
+    if (!nombre || isNaN(cantidad) || isNaN(precio)) {
+        alert("Por favor, ingrese datos válidos.");
         return;
     }
 
-    let productos = JSON.parse(localStorage.getItem("inventario")) || [];
+    // Crear objeto producto
+    const producto = { nombre, cantidad, precio };
 
-    if (editIndex === -1) {
-        // Agregar nuevo producto
-        productos.push({ nombre, cantidad, precio });
-    } else {
-        // Editar producto existente
-        productos[editIndex] = { nombre, cantidad, precio };
-        editIndex = -1; // Reiniciar índice de edición
-        document.getElementById("submitBtn").innerText = "Agregar Producto";
-    }
-
-    totalAcciones++; // Aumentar contador de acciones
-    localStorage.setItem("inventario", JSON.stringify(productos));
+    // Agregar al inventario
+    inventario.push(producto);
+    totalProductos++;
+    totalPrecio += precio; // Sumar el precio al total
     
-    form.reset();
-    mostrarInventario();
+    // Actualizar la tabla y los contadores
+    actualizarInventario();
+    actualizarResumen();
+
+    // Limpiar el formulario
+    formProducto.reset();
 });
 
-// Función para mostrar inventario
-function mostrarInventario() {
-    tabla.innerHTML = "";
-    let productos = JSON.parse(localStorage.getItem("inventario")) || [];
-    let total = 0;
-    let totalProductos = 0;
+// Función para actualizar la tabla de inventario
+function actualizarInventario() {
+    tablaInventario.innerHTML = ""; // Limpiar la tabla
 
-    productos.forEach((producto, index) => {
-        let subtotal = producto.cantidad * producto.precio;
-        total += subtotal;
-        totalProductos += producto.cantidad;
-
-        let fila = document.createElement("tr");
+    inventario.forEach((producto, index) => {
+        const fila = document.createElement("tr");
         fila.innerHTML = `
             <td>${producto.nombre}</td>
             <td>${producto.cantidad}</td>
             <td>$${producto.precio.toFixed(2)}</td>
-            <td>$${subtotal.toFixed(2)}</td>
             <td>
-                <button onclick="editarProducto(${index})">Editar</button>
-                <button onclick="eliminarProducto(${index})">Eliminar</button>
+                <button onclick="editarProducto(${index})">✏️ Editar</button>
+                <button onclick="eliminarProducto(${index})">🗑️ Eliminar</button>
             </td>
         `;
-        tabla.appendChild(fila);
+        tablaInventario.appendChild(fila);
     });
-
-    // Actualizar totales
-    totalElement.innerText = `Total del Inventario: $${total.toFixed(2)}`;
-    totalProductosElement.innerText = `Cantidad Total de Productos: ${totalProductos}`;
-    totalAccionesElement.innerText = `Total de Acciones: ${totalAcciones}`;
 }
 
-// Función para eliminar producto
+// Función para eliminar un producto
 function eliminarProducto(index) {
-    let productos = JSON.parse(localStorage.getItem("inventario"));
-    productos.splice(index, 1);
-    totalAcciones++; // Aumentar contador de acciones
-    localStorage.setItem("inventario", JSON.stringify(productos));
-    mostrarInventario();
+    const productoEliminado = inventario[index].nombre; // Guardar nombre del producto
+    totalPrecio -= inventario[index].precio; // Restar el precio del total
+    inventario.splice(index, 1); // Eliminar del array
+    totalProductos--;
+    productosEliminados++;
+
+    // Agregar a la lista de eliminados
+    const itemEliminado = document.createElement("li");
+    itemEliminado.textContent = productoEliminado;
+    listaEliminados.appendChild(itemEliminado);
+
+    // Actualizar la tabla y los contadores
+    actualizarInventario();
+    actualizarResumen();
 }
 
-// Función para editar producto
+// Función para editar un producto
 function editarProducto(index) {
-    let productos = JSON.parse(localStorage.getItem("inventario"));
-    let producto = productos[index];
+    const nuevoNombre = prompt("Nuevo nombre:", inventario[index].nombre);
+    const nuevaCantidad = prompt("Nueva cantidad:", inventario[index].cantidad);
+    const nuevoPrecio = prompt("Nuevo precio:", inventario[index].precio);
 
-    document.getElementById("nombre").value = producto.nombre;
-    document.getElementById("cantidad").value = producto.cantidad;
-    document.getElementById("precio").value = producto.precio;
+    // Validar entrada
+    if (nuevoNombre && !isNaN(nuevaCantidad) && !isNaN(nuevoPrecio)) {
+        totalPrecio -= inventario[index].precio; // Restar el precio anterior
+        inventario[index].nombre = nuevoNombre;
+        inventario[index].cantidad = parseInt(nuevaCantidad);
+        inventario[index].precio = parseFloat(nuevoPrecio);
+        totalPrecio += inventario[index].precio; // Sumar el nuevo precio
 
-    editIndex = index;
-    document.getElementById("submitBtn").innerText = "Actualizar Producto";
-    totalAcciones++; // Aumentar contador de acciones
-    mostrarInventario();
+        actualizarInventario();
+        actualizarResumen();
+    } else {
+        alert("Entrada no válida. Inténtelo de nuevo.");
+    }
 }
 
-mostrarInventario();
-
+// Función para actualizar los contadores
+function actualizarResumen() {
+    totalProductosElem.textContent = `Total de productos: ${totalProductos}`;
+    productosEliminadosElem.textContent = `Productos eliminados: ${productosEliminados}`;
+    totalPrecioElem.textContent = `Total en precio: $${totalPrecio.toFixed(2)}`; // Mostrar la suma total de los precios
+}
