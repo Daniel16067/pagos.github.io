@@ -9,6 +9,7 @@
 <body>
     <div class="gest"><h1>Gestión de Inventario</h1></div>
 
+    <!-- Formulario para agregar productos -->
     <form id="formProducto">
         <input type="text" id="nombre" placeholder="Nombre de la prenda" required>
         <input type="number" id="cantidad" placeholder="Cantidad" required>
@@ -16,6 +17,7 @@
         <button type="submit">Agregar Producto</button>
     </form>
     
+    <!-- Tabla para mostrar productos -->
     <table id="tablaInventario">
         <thead>
             <tr>
@@ -27,10 +29,17 @@
         </thead>
         <tbody></tbody>
     </table>
-    <h3 id="totalInventario">Total del Inventario: $0.00</h3>
-<h3 id="totalProductos">Cantidad Total de Productos: 0</h3>
-<h3 id="totalAcciones">Total de Acciones: 0</h3> <!-- NUEVO -->
 
+    <!-- Resumen de productos y acciones -->
+    <div id="resumen">
+        <p id="totalProductos">Total de productos: 0</p>
+        <p id="productosEliminados">Productos eliminados: 0</p>
+        <p id="totalPrecio">Total en precio: $0.00</p>
+    </div>
+
+    <!-- Lista de productos eliminados -->
+    <h2>Productos Eliminados</h2>
+    <ul id="listaEliminados"></ul>
 
     <script src="in.js"></script>
 </body>
