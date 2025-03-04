@@ -1,4 +1,4 @@
-// Variables globales
+// Recuperar datos de localStorage al iniciar
 let inventario = JSON.parse(localStorage.getItem("inventario")) || [];
 let totalProductos = parseInt(localStorage.getItem("totalProductos")) || 0;
 let productosEliminados = parseInt(localStorage.getItem("productosEliminados")) || 0;
@@ -40,7 +40,7 @@ formProducto.addEventListener("submit", function (event) {
     // Agregar al inventario
     inventario.push(producto);
     totalProductos++;
-    totalPrecio += precio;
+    totalPrecio += precio * cantidad; // Ajustar el total correctamente
 
     // Guardar en LocalStorage y actualizar la UI
     guardarDatos();
@@ -68,25 +68,30 @@ function actualizarInventario() {
         `;
         tablaInventario.appendChild(fila);
     });
+
+    // Guardar los datos en localStorage después de actualizar la tabla
+    guardarDatos();
 }
 
 // Función para eliminar un producto
 function eliminarProducto(index) {
-    const productoEliminado = inventario[index].nombre;
-    totalPrecio -= inventario[index].precio;
-    inventario.splice(index, 1);
-    totalProductos--;
-    productosEliminados++;
+    if (index >= 0 && index < inventario.length) {
+        const productoEliminado = inventario[index].nombre;
+        totalPrecio -= inventario[index].precio * inventario[index].cantidad;
+        inventario.splice(index, 1);
+        totalProductos--;
+        productosEliminados++;
 
-    // Agregar a la lista de eliminados
-    const itemEliminado = document.createElement("li");
-    itemEliminado.textContent = productoEliminado;
-    listaEliminados.appendChild(itemEliminado);
+        // Agregar a la lista de eliminados
+        const itemEliminado = document.createElement("li");
+        itemEliminado.textContent = productoEliminado;
+        listaEliminados.appendChild(itemEliminado);
 
-    // Guardar cambios en LocalStorage y actualizar la UI
-    guardarDatos();
-    actualizarInventario();
-    actualizarResumen();
+        // Guardar cambios en localStorage y actualizar la UI
+        guardarDatos();
+        actualizarInventario();
+        actualizarResumen();
+    }
 }
 
 // Función para editar un producto
@@ -96,11 +101,11 @@ function editarProducto(index) {
     const nuevoPrecio = prompt("Nuevo precio:", inventario[index].precio);
 
     if (nuevoNombre && !isNaN(nuevaCantidad) && !isNaN(nuevoPrecio)) {
-        totalPrecio -= inventario[index].precio;
+        totalPrecio -= inventario[index].precio * inventario[index].cantidad; // Restar precio anterior
         inventario[index].nombre = nuevoNombre;
         inventario[index].cantidad = parseInt(nuevaCantidad);
         inventario[index].precio = parseFloat(nuevoPrecio);
-        totalPrecio += inventario[index].precio;
+        totalPrecio += inventario[index].precio * inventario[index].cantidad; // Sumar nuevo precio
 
         // Guardar cambios y actualizar la UI
         guardarDatos();
@@ -118,7 +123,7 @@ function actualizarResumen() {
     totalPrecioElem.textContent = `Total en precio: $${totalPrecio.toFixed(2)}`;
 }
 
-// Función para resetear el total del precio y limpiar el inventario
+// Función para resetear el inventario
 function resetearTotalPrecio() {
     totalPrecio = 0;
     totalProductos = 0;
@@ -144,4 +149,3 @@ function guardarDatos() {
     localStorage.setItem("productosEliminados", productosEliminados);
     localStorage.setItem("totalPrecio", totalPrecio);
 }
-
